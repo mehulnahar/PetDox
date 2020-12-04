@@ -1,0 +1,19 @@
+Alias name : PetDox
+Password : maroof
+Keystore password : maroof
+
+Creation date: Nov 25, 2020
+Entry type: PrivateKeyEntry
+Certificate chain length: 1
+Certificate[1]:
+Owner: CN=PetDox, OU=100, O=MCT, L=Indore, ST=MP, C=91
+Issuer: CN=PetDox, OU=100, O=MCT, L=Indore, ST=MP, C=91
+Serial number: 7b8c1c2d
+Valid from: Wed Nov 25 17:54:20 IST 2020 until: Fri Nov 01 17:54:20 IST 2120
+Certificate fingerprints:
+         MD5:  EC:F8:5A:9E:2C:3C:1B:72:A4:86:44:D9:9C:DB:C8:BC
+         SHA1: E7:01:D5:BA:DA:DA:0B:AE:A8:B4:53:F1:90:6D:51:92:63:AF:AE:1D
+         SHA256: 31:D4:51:6D:99:8B:34:01:4A:96:5F:9C:82:2B:4A:62:A0:58:55:1E:92:83:5B:30:CA:B1:1D:A8:32:98:CF:9E
+Signature algorithm name: SHA256withRSAs
+
+Facebook Key Hash : 5wHVutraC66otFPxkG1RkmOvrh0=

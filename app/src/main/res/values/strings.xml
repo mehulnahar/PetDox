@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">PetDox</string>
+    <string name="header">Header</string>
+    <string name="add_new">Add New</string>
+    <string name="find_pet">Find Pet</string>
+    <string name="yes">Yes</string>
+    <string name="ok">Ok</string>
+    <string name="cancel">Cancel</string>
+    <string name="some_req_permissions">Some Permissions are required for this app</string>
+    <string name="open_settings">You need to give some mandatory permissions to continue. Do you want to go to app settings?</string>
+    <string name="flash">Flash</string>
+    <string name="save">Save</string>
+    <string name="replace">Replace</string>
+    <string name="remove">Remove</string>
+    <string name="add_picture">Add Picture</string>
+    <string name="add_category">Add Category</string>
+    <string name="add_reminder">Add Reminder</string>
+    <string name="date">Date</string>
+    <string name="description_text">Add a note. ( Max. 500 characters allowed )</string>
+    <string name="list_category">List of Category</string>
+    <string name="Yes">Yes</string>
+    <string name="no">No</string>
+    <string name="okay">Okay</string>
+    <string name="submit">Submit</string>
+    <string name="most_recent_first">Most recent first</string>
+    <string name="next_reminder_first">Next reminder first</string>
+    <string name="coming_soon">Coming Soon</string>
+    <string name="add_note">Add a note ( Max. 500 characters allowed )</string>
+    <string name="max_characters_text">Max. 500 characters allowed</string>
+    <string name="no_record_added">No Record Added</string>
+
+
+</resources>

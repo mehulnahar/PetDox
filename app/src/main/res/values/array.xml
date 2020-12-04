@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+
+    <string-array name="mainCategoryArray">
+        <item>1. Cat</item>
+        <item>2. Dog</item>
+        <item>3. Elephant</item>
+        <item>4. Fish</item>
+        <item>5. Frog</item>
+        <item>6. Monkey</item>
+        <item>7. Gorilla</item>
+        <item>8. Cow</item>
+        <item>9. Zebra</item>
+        <item>99. other/unknown</item>
+    </string-array>
+
+    <string-array name="catArray">
+        <item>1.1 Ragdoll</item>
+        <item>1.2 British Shorthair</item>
+        <item>1.3 Exotic Shorthair</item>
+        <item>1.4 Persian</item>
+        <item>1.5 Maine Coon</item>
+        <item>1.6 American Shorthair</item>
+        <item>1.7 Devon Rex</item>
+        <item>1.8 Sphynx</item>
+        <item>1.9 Scottish Fold</item>
+        <item>1.10 Abyssinian</item>
+    </string-array>
+
+    <string-array name="dogArray">
+        <item>2.1 Maltese Cross</item>
+        <item>2.2 Cavoodle</item>
+        <item>2.3 Labrador</item>
+        <item>2.4 Staffordshire Bull Terrier</item>
+        <item>2.5 Border Collie</item>
+        <item>2.6 Golden Retriever</item>
+        <item>2.7 German Shepherd</item>
+        <item>2.8 Kelpie Cross</item>
+        <item>2.9 Staffordshire Bull Terrier Cross</item>
+        <item>2.10 Jack Russell Terrier Cross</item>
+    </string-array>
+
+    <string-array name="elephantArray">
+        <item>3.1 Borneo elephant</item>
+        <item>3.2 Sumatran elephant</item>
+        <item>3.3 Indian elephant</item>
+        <item>3.4 Sri Lankan elephant</item>
+        <item>3.5 Asian Elephant</item>
+        <item>3.6 Forest Elephant</item>
+        <item>3.7 Savannah/Bush Elephant</item>
+        <item>3.8 African Elephant</item>
+        <item>3.9 Classification Of Elephants</item>
+    </string-array>
+
+    <string-array name="fishArray">
+        <item>4.1 Oarfish</item>
+        <item>4.2 Ocean perch</item>
+        <item>4.3 Ocean sunfish</item>
+        <item>4.4 Oceanic whitetip shark</item>
+        <item>4.5 Oilfish</item>
+        <item>4.6 Oldwife</item>
+        <item>4.7 Old World knifefish</item>
+        <item>4.8 Olive flounder</item>
+        <item>4.9 Opah</item>
+        <item>4.10 Opaleye</item>
+    </string-array>
+
+    <string-array name="frogArray">
+        <item>5.1 Red-Eyed Tree Frog</item>
+        <item>5.2 Blue Poison Dart Frog</item>
+        <item>5.3 Golden Poison Frog</item>
+        <item>5.4 Amazon Milk Frog</item>
+        <item>5.5 Tomato Frog</item>
+        <item>5.6 Goliath Frog</item>
+        <item>5.7 Mimic Poison Frog</item>
+    </string-array>
+
+    <string-array name="monkeyArray">
+        <item>6.1 Spider Monkey</item>
+        <item>6.2 Squirrel Monkey</item>
+        <item>6.3 Vervet Monkey</item>
+        <item>6.4 Monkey Species</item>
+        <item>6.5 Proboscis Monkey</item>
+        <item>6.6 Pygmy Marmoset</item>
+        <item>6.7 Rhesus Macaque</item>
+    </string-array>
+
+    <string-array name="gorillaArray">
+        <item>7.1 Western gorilla</item>
+        <item>7.2 Western lowland gorilla</item>
+        <item>7.3 Cross River gorilla</item>
+        <item>7.4 Eastern gorilla</item>
+        <item>7.5 Mountain gorilla</item>
+        <item>7.6 Eastern lowland gorilla</item>
+    </string-array>
+
+    <string-array name="cowArray">
+        <item>8.1 Abigar</item>
+        <item>8.2 Agerolese</item>
+        <item>8.3 Alderney</item>
+        <item>8.4 Angeln</item>
+        <item>8.5 Aulie-Ata</item>
+        <item>8.6 Australian Friesian Sahiwalv</item>
+        <item>8.7 Belgian Red Cattle</item>
+        <item>8.8 Blaarkop</item>
+        <item>8.9 Burlina</item>
+        <item>8.10 Chinese black pied</item>
+    </string-array>
+
+    <string-array name="zebraArray">
+        <item>9.1 Crawshay\'s Zebra</item>
+        <item>9.2 Chapman\'s Zebra</item>
+        <item>9.3 Maneless Zebra</item>
+        <item>9.4 Selous Zebra</item>
+        <item>9.5 Grant\'s Zebra</item>
+        <item>9.6 Burchell\'s Zebra</item>
+        <item>9.7 Plains Zebra</item>
+        <item>9.8 Cape mountain Zebra</item>
+        <item>9.9 Hartmann\'s mountain Zebra</item>
+        <item>9.10 Mountain Zebra</item>
+    </string-array>
+</resources>

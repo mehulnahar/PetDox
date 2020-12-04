@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="210dp"
+    android:layout_height="280dp">
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/pet_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/image_position"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:background="#232323"
+        android:paddingStart="@dimen/margin_10"
+        android:paddingTop="@dimen/margin_5"
+        android:paddingEnd="@dimen/margin_10"
+        android:paddingBottom="@dimen/margin_5"
+        android:textColor="@color/white" />
+</RelativeLayout>
