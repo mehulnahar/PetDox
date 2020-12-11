@@ -1,4 +1,4 @@
-package com.petdox.mct.preview;
+package com.petdox.mct.editpreview;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -22,21 +22,21 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.petdox.mct.BuildConfig;
-import com.petdox.mct.MainActivity;
 import com.petdox.mct.R;
 import com.petdox.mct.base.BaseActivity;
 import com.petdox.mct.callback.CallbackImagePreview;
 import com.petdox.mct.callback.CallbackMainCategory;
 import com.petdox.mct.callback.CallbackSubCategory;
-import com.petdox.mct.camera.CameraActivity;
 import com.petdox.mct.database.DatabaseManager;
-import com.petdox.mct.databinding.ActivityPreviewBinding;
+import com.petdox.mct.databinding.ActivityEditPreviewBinding;
 import com.petdox.mct.model.AlbumModel;
+import com.petdox.mct.model.CarouselModel;
+import com.petdox.mct.preview.AddPictureActivity;
+import com.petdox.mct.preview.DisplayImagesActivity;
 import com.petdox.mct.preview.adapter.MainCategoryAdapter;
 import com.petdox.mct.preview.adapter.PreviewImagesAdapter;
 import com.petdox.mct.preview.adapter.ReminderListAdapter;
 import com.petdox.mct.preview.adapter.SelectedCategoryAdapter;
-import com.petdox.mct.preview.adapter.SubCategoryAdapter;
 import com.petdox.mct.preview.model.MainCategoryModel;
 import com.petdox.mct.preview.model.ReminderModel;
 import com.petdox.mct.preview.model.SubCategoryModel;
@@ -66,23 +66,23 @@ import java.util.Objects;
  * Created by Maroof Ahmed Siddique
  * maroofahmedsiddique@gmail.com
  */
-public class PreviewActivity extends BaseActivity implements CallbackMainCategory, CallbackSubCategory, DatePickerDialog.OnDateSetListener, CallbackImagePreview {
+public class EditPreviewActivity extends BaseActivity implements CallbackMainCategory, CallbackSubCategory, DatePickerDialog.OnDateSetListener, CallbackImagePreview {
 
     private static final int PERMISSION_CODE = 1002;
     public static ArrayList<String> selectedCategoryModelList = new ArrayList<>();
     private final ArrayList<String> selectedMainCategoryModelList = new ArrayList<>();
+    ActivityEditPreviewBinding activityEditPreviewBinding;
     int LAUNCH_ADD_PICTURE_ACTIVITY = 1;
     int LAUNCH_REPLACE_PICTURE_ACTIVITY = 2;
-    ActivityPreviewBinding activityPreviewBinding;
-    String imagePath = "";
     PreviewImagesAdapter previewImagesAdapter = null;
     MainCategoryAdapter mainCategoryAdapter = null;
-    SubCategoryAdapter subCategoryAdapter = null;
+    SubEditCategoryAdapter subCategoryAdapter = null;
     SelectedCategoryAdapter selectedCategoryAdapter = null;
     ArrayList<String> imagesList = new ArrayList<>();
     List<MainCategoryModel> mainCategoryModelList = new ArrayList<>();
     String replaceImage = "";
     int currentImagePos = 0;
+    CarouselModel carouselModel = null;
     String[] mCategoryArray;
     String[] catArray;
     String[] dogArray;
@@ -98,6 +98,7 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
     String reminderConverted = "";
     String reminderTime = "";
     boolean isTimeAllow = false;
+    AlbumModel albumModelMain = null;
     private AlbumRepo albumRepo;
 
     @SuppressLint("ClickableViewAccessibility")
@@ -105,12 +106,12 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        activityPreviewBinding = ActivityPreviewBinding.inflate(getLayoutInflater());
-        setContentView(activityPreviewBinding.getRoot());
+        activityEditPreviewBinding = ActivityEditPreviewBinding.inflate(getLayoutInflater());
+        setContentView(activityEditPreviewBinding.getRoot());
 
-        activityPreviewBinding.imagesRecyclerview.setNestedScrollingEnabled(false);
-        activityPreviewBinding.mainCategoryList.setNestedScrollingEnabled(false);
-        activityPreviewBinding.subCategoryList.setNestedScrollingEnabled(false);
+        activityEditPreviewBinding.imagesRecyclerview.setNestedScrollingEnabled(false);
+        activityEditPreviewBinding.mainCategoryList.setNestedScrollingEnabled(false);
+        activityEditPreviewBinding.subCategoryList.setNestedScrollingEnabled(false);
 
         if (selectedCategoryModelList != null && selectedCategoryModelList.size() > 0) {
             selectedCategoryModelList.clear();
@@ -118,15 +119,33 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
         if (selectedMainCategoryModelList != null && selectedMainCategoryModelList.size() > 0) {
             selectedMainCategoryModelList.clear();
         }
-        init();
 
         Intent intent = getIntent();
-        imagePath = intent.getStringExtra("IMAGE_PATH");
+        if (intent != null && intent.hasExtra("EDIT_DETAILS")) {
+            carouselModel = (CarouselModel) intent.getSerializableExtra("EDIT_DETAILS");
+            albumModelMain = (AlbumModel) intent.getSerializableExtra("ALBUM");
+        }
+        if (carouselModel == null || albumModelMain == null) {
+            showToast("No Data Found !!!");
+            finish();
+        }
+        init();
 
-        Date date = Calendar.getInstance().getTime();
-        @SuppressLint("SimpleDateFormat") DateFormat formatter = new SimpleDateFormat("dd.MM.yyyy");
-        String today = formatter.format(date);
-        activityPreviewBinding.photoDate.setText(today);
+        activityEditPreviewBinding.photoDate.setText(carouselModel.getDate());
+
+        if (carouselModel.getReminderConverted() != null && !carouselModel.getReminderConverted().equalsIgnoreCase("")) {
+            activityEditPreviewBinding.addReminderText.setText(carouselModel.getReminderConverted());
+        } else {
+            activityEditPreviewBinding.addReminderText.setText(getResources().getString(R.string.no_reminder));
+        }
+
+        activityEditPreviewBinding.addReminder.setBackgroundResource(R.drawable.rectangle_orange_black_border);
+
+        activityEditPreviewBinding.addCategoryText.setText(getResources().getString(R.string.list_category));
+        activityEditPreviewBinding.addCategory.setBackgroundResource(R.drawable.rectangle_dark_green_border);
+        activityEditPreviewBinding.saveDetails.setBackgroundResource(R.drawable.rectangle_dark_green_border);
+        activityEditPreviewBinding.descriptionText.setText(carouselModel.getNote());
+        enableSaved = true;
 
         mCategoryArray = getResources().getStringArray(R.array.mainCategoryArray);
         catArray = getResources().getStringArray(R.array.catArray);
@@ -139,53 +158,147 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
         cowArray = getResources().getStringArray(R.array.cowArray);
         zebraArray = getResources().getStringArray(R.array.zebraArray);
 
+        if (selectedCategoryAdapter == null) {
+            LinearLayoutManager linearLayoutManager1 = new LinearLayoutManager(EditPreviewActivity.this, LinearLayoutManager.HORIZONTAL, false);
+            selectedCategoryAdapter = new SelectedCategoryAdapter(EditPreviewActivity.this);
+            activityEditPreviewBinding.selectedCategoryList.setLayoutManager(linearLayoutManager1);
+            activityEditPreviewBinding.selectedCategoryList.setAdapter(selectedCategoryAdapter);
+        }
+
+        for (int k = 0; k < carouselModel.getSubCategories().size(); k++) {
+            selectedCategoryModelList.add(carouselModel.getSubCategories().get(k));
+            selectedCategoryAdapter.addCategory(carouselModel.getSubCategories().get(k));
+        }
+
+
         for (String value : mCategoryArray) {
             List<SubCategoryModel> subCategoryModelList = new ArrayList<>();
             if (value.toLowerCase().contains("cat")) {
                 for (String s : catArray) {
-                    subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    if (carouselModel.getSubCategories().contains(s)) {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, true));
+                    } else {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    }
                 }
-                mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                if (carouselModel.getMainCategories().contains(value)) {
+                    selectedMainCategoryModelList.add(value);
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, true));
+                } else {
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                }
             } else if (value.toLowerCase().contains("dog")) {
                 for (String s : dogArray) {
-                    subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    if (carouselModel.getSubCategories().contains(s)) {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, true));
+                    } else {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    }
                 }
-                mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                if (carouselModel.getMainCategories().contains(value)) {
+                    selectedMainCategoryModelList.add(value);
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, true));
+                } else {
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                }
             } else if (value.toLowerCase().contains("elephant")) {
                 for (String s : elephantArray) {
-                    subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    if (carouselModel.getSubCategories().contains(s)) {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, true));
+                    } else {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    }
                 }
-                mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                if (carouselModel.getMainCategories().contains(value)) {
+                    selectedMainCategoryModelList.add(value);
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, true));
+                } else {
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                }
             } else if (value.toLowerCase().contains("fish")) {
                 for (String s : fishArray) {
-                    subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    if (carouselModel.getSubCategories().contains(s)) {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, true));
+                    } else {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    }
                 }
-                mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                if (carouselModel.getMainCategories().contains(value)) {
+                    selectedMainCategoryModelList.add(value);
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, true));
+                } else {
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                }
             } else if (value.toLowerCase().contains("frog")) {
                 for (String s : frogArray) {
-                    subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    if (carouselModel.getSubCategories().contains(s)) {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, true));
+                    } else {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    }
                 }
-                mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                if (carouselModel.getMainCategories().contains(value)) {
+                    selectedMainCategoryModelList.add(value);
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, true));
+                } else {
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                }
             } else if (value.toLowerCase().contains("monkey")) {
                 for (String s : monkeyArray) {
-                    subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    if (carouselModel.getSubCategories().contains(s)) {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, true));
+                    } else {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    }
                 }
-                mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                if (carouselModel.getMainCategories().contains(value)) {
+                    selectedMainCategoryModelList.add(value);
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, true));
+                } else {
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                }
             } else if (value.toLowerCase().contains("gorilla")) {
                 for (String s : gorillaArray) {
-                    subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    if (carouselModel.getSubCategories().contains(s)) {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, true));
+                    } else {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    }
                 }
-                mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                if (carouselModel.getMainCategories().contains(value)) {
+                    selectedMainCategoryModelList.add(value);
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, true));
+                } else {
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                }
             } else if (value.toLowerCase().contains("cow")) {
                 for (String s : cowArray) {
-                    subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    if (carouselModel.getSubCategories().contains(s)) {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, true));
+                    } else {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    }
                 }
-                mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                if (carouselModel.getMainCategories().contains(value)) {
+                    selectedMainCategoryModelList.add(value);
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, true));
+                } else {
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                }
             } else if (value.toLowerCase().contains("zebra")) {
                 for (String s : zebraArray) {
-                    subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    if (carouselModel.getSubCategories().contains(s)) {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, true));
+                    } else {
+                        subCategoryModelList.add(new SubCategoryModel(s, false, false));
+                    }
                 }
-                mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                if (carouselModel.getMainCategories().contains(value)) {
+                    selectedMainCategoryModelList.add(value);
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, true));
+                } else {
+                    mainCategoryModelList.add(new MainCategoryModel(value, subCategoryModelList, false, false));
+                }
             } else {
                 mainCategoryModelList.add(new MainCategoryModel(value, null, false, false));
             }
@@ -196,16 +309,20 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
             previewImagesAdapter = new PreviewImagesAdapter(this);
         }
         previewImagesAdapter.setCallbackImagePreview(this);
-        activityPreviewBinding.imagesRecyclerview.setLayoutManager(linearLayoutManager);
-        activityPreviewBinding.imagesRecyclerview.setAdapter(previewImagesAdapter);
+        activityEditPreviewBinding.imagesRecyclerview.setLayoutManager(linearLayoutManager);
+        activityEditPreviewBinding.imagesRecyclerview.setAdapter(previewImagesAdapter);
+        for (int i = 0; i < carouselModel.getImages().size(); i++) {
+            imagesList.add(carouselModel.getImages().get(i));
+            previewImagesAdapter.addImage(carouselModel.getImages().get(i));
+        }
 
-        imagesList.add(imagePath);
-        previewImagesAdapter.addImage(imagePath);
+        activityEditPreviewBinding.selectedCategoryList.setVisibility(View.VISIBLE);
+        activityEditPreviewBinding.selectedCategoryList.smoothScrollToPosition(Objects.requireNonNull(activityEditPreviewBinding.selectedCategoryList.getAdapter()).getItemCount() - 1);
 
         MultiSnapHelper multiSnapHelper = new MultiSnapHelper(SnapGravity.START, 1, 100);
-        multiSnapHelper.attachToRecyclerView(activityPreviewBinding.imagesRecyclerview);
+        multiSnapHelper.attachToRecyclerView(activityEditPreviewBinding.imagesRecyclerview);
 
-        activityPreviewBinding.imagesRecyclerview.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        activityEditPreviewBinding.imagesRecyclerview.addOnScrollListener(new RecyclerView.OnScrollListener() {
 
             @Override
             public void onScrollStateChanged(@NotNull RecyclerView recyclerView, int newState) {
@@ -222,31 +339,31 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
             }
         });
 
-        activityPreviewBinding.addCategory.setOnClickListener(v -> {
-            LinearLayoutManager linearLayoutManager1 = new LinearLayoutManager(PreviewActivity.this, LinearLayoutManager.VERTICAL, false);
-            mainCategoryAdapter = new MainCategoryAdapter(PreviewActivity.this);
+        activityEditPreviewBinding.addCategory.setOnClickListener(v -> {
+            LinearLayoutManager linearLayoutManager1 = new LinearLayoutManager(EditPreviewActivity.this, LinearLayoutManager.VERTICAL, false);
+            mainCategoryAdapter = new MainCategoryAdapter(EditPreviewActivity.this);
             mainCategoryAdapter.setCallbackMainCategory(this);
-            activityPreviewBinding.mainCategoryList.setLayoutManager(linearLayoutManager1);
-            activityPreviewBinding.mainCategoryList.setAdapter(mainCategoryAdapter);
+            activityEditPreviewBinding.mainCategoryList.setLayoutManager(linearLayoutManager1);
+            activityEditPreviewBinding.mainCategoryList.setAdapter(mainCategoryAdapter);
             mainCategoryAdapter.refreshList(mainCategoryModelList);
 
-            activityPreviewBinding.categoryLayout.setVisibility(View.VISIBLE);
-            activityPreviewBinding.captureView.setVisibility(View.VISIBLE);
+            activityEditPreviewBinding.categoryLayout.setVisibility(View.VISIBLE);
+            activityEditPreviewBinding.captureView.setVisibility(View.VISIBLE);
         });
 
-        activityPreviewBinding.cancel.setOnClickListener(v -> {
-            if (activityPreviewBinding.categoryLayout.getVisibility() == View.VISIBLE) {
-                activityPreviewBinding.categoryLayout.setVisibility(View.GONE);
-                activityPreviewBinding.captureView.setVisibility(View.GONE);
+        activityEditPreviewBinding.cancel.setOnClickListener(v -> {
+            if (activityEditPreviewBinding.categoryLayout.getVisibility() == View.VISIBLE) {
+                activityEditPreviewBinding.categoryLayout.setVisibility(View.GONE);
+                activityEditPreviewBinding.captureView.setVisibility(View.GONE);
             } else {
                 cancelDialog();
             }
         });
 
-        activityPreviewBinding.photoDate.setOnClickListener(v -> {
+        activityEditPreviewBinding.photoDate.setOnClickListener(v -> {
             Calendar now = Calendar.getInstance();
             DatePickerDialog dpd = DatePickerDialog.newInstance(
-                    PreviewActivity.this,
+                    EditPreviewActivity.this,
                     now.get(Calendar.YEAR),
                     now.get(Calendar.MONTH),
                     now.get(Calendar.DAY_OF_MONTH)
@@ -255,23 +372,23 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
 
         });
 
-        activityPreviewBinding.mainCategoryList.setOnTouchListener((v, event) -> {
+        activityEditPreviewBinding.mainCategoryList.setOnTouchListener((v, event) -> {
             // Disallow the touch request for parent scroll on touch of  child view
-            activityPreviewBinding.categoryLayout.requestDisallowInterceptTouchEvent(true);
+            activityEditPreviewBinding.categoryLayout.requestDisallowInterceptTouchEvent(true);
             return false;
         });
 
-        activityPreviewBinding.subCategoryList.setOnTouchListener((v, event) -> {
+        activityEditPreviewBinding.subCategoryList.setOnTouchListener((v, event) -> {
             // Disallow the touch request for parent scroll on touch of  child view
-            activityPreviewBinding.categoryLayout.requestDisallowInterceptTouchEvent(true);
+            activityEditPreviewBinding.categoryLayout.requestDisallowInterceptTouchEvent(true);
             return false;
         });
 
-        activityPreviewBinding.addPicture.setOnClickListener(v -> addPictureDialog());
+        activityEditPreviewBinding.addPicture.setOnClickListener(v -> addPictureDialog());
 
-        activityPreviewBinding.replace.setOnClickListener(v -> replacePictureDialog());
+        activityEditPreviewBinding.replace.setOnClickListener(v -> replacePictureDialog());
 
-        activityPreviewBinding.remove.setOnClickListener(v -> {
+        activityEditPreviewBinding.remove.setOnClickListener(v -> {
             if (imagesList != null && imagesList.size() == 1) {
                 removePictureDialog();
             } else {
@@ -279,9 +396,9 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
             }
         });
 
-        activityPreviewBinding.addNoteView.setOnClickListener(v -> {
+        activityEditPreviewBinding.addNoteView.setOnClickListener(v -> {
             String desText = getResources().getString(R.string.description_text);
-            String actualDesText = activityPreviewBinding.descriptionText.getText().toString().trim();
+            String actualDesText = activityEditPreviewBinding.descriptionText.getText().toString().trim();
             if (desText.equalsIgnoreCase(actualDesText)) {
                 addNoteDialog("");
             } else {
@@ -289,38 +406,45 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
             }
         });
 
-        activityPreviewBinding.addReminder.setOnClickListener(v -> addReminderDialog());
+        activityEditPreviewBinding.addReminder.setOnClickListener(v -> addReminderDialog());
 
-        activityPreviewBinding.saveDetails.setOnClickListener(v -> {
+        activityEditPreviewBinding.saveDetails.setOnClickListener(v -> {
             if (enableSaved) {
-                saveData();
+                updateData();
             } else {
                 showToast("Please select any category/sub-category");
             }
         });
 
-        activityPreviewBinding.selectedCategoryList.setOnClickListener(v -> {
+        activityEditPreviewBinding.selectedCategoryList.setOnClickListener(v -> {
 
         });
 
-        activityPreviewBinding.mainScrollview.setOnClickListener(v -> {
+        activityEditPreviewBinding.mainScrollview.setOnClickListener(v -> {
 
         });
 
-        activityPreviewBinding.captureView.setOnClickListener(v -> {
+        activityEditPreviewBinding.captureView.setOnClickListener(v -> {
 
         });
 
-        activityPreviewBinding.categoryLayout.setOnClickListener(v -> {
+        activityEditPreviewBinding.categoryLayout.setOnClickListener(v -> {
 
         });
+
+        activityEditPreviewBinding.deleteDetails.setOnClickListener(v -> deleteDataPopup());
+    }
+
+    private void init() {
+        DatabaseManager.init(EditPreviewActivity.this);
+        albumRepo = new AlbumRepo();
     }
 
     @Override
     public void onBackPressed() {
-        if (activityPreviewBinding.categoryLayout.getVisibility() == View.VISIBLE) {
-            activityPreviewBinding.categoryLayout.setVisibility(View.GONE);
-            activityPreviewBinding.captureView.setVisibility(View.GONE);
+        if (activityEditPreviewBinding.categoryLayout.getVisibility() == View.VISIBLE) {
+            activityEditPreviewBinding.categoryLayout.setVisibility(View.GONE);
+            activityEditPreviewBinding.captureView.setVisibility(View.GONE);
         } else {
             cancelDialog();
         }
@@ -331,21 +455,21 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
 
         mainCategoryAdapter.notifyDataSetChanged();
         if (mainCategoryModel.getSubCategoryModelList() != null && mainCategoryModel.getSubCategoryModelList().size() > 0) {
-            LinearLayoutManager linearLayoutManager1 = new LinearLayoutManager(PreviewActivity.this, LinearLayoutManager.VERTICAL, false);
-            subCategoryAdapter = new SubCategoryAdapter(PreviewActivity.this);
+            LinearLayoutManager linearLayoutManager1 = new LinearLayoutManager(EditPreviewActivity.this, LinearLayoutManager.VERTICAL, false);
+            subCategoryAdapter = new SubEditCategoryAdapter(EditPreviewActivity.this);
             subCategoryAdapter.setCallbackSubCategory(this);
-            activityPreviewBinding.subCategoryList.setLayoutManager(linearLayoutManager1);
-            activityPreviewBinding.subCategoryList.setAdapter(subCategoryAdapter);
+            activityEditPreviewBinding.subCategoryList.setLayoutManager(linearLayoutManager1);
+            activityEditPreviewBinding.subCategoryList.setAdapter(subCategoryAdapter);
             subCategoryAdapter.refreshList(mainCategoryModel);
         } else {
             if (selectedCategoryModelList != null && selectedCategoryModelList.size() == 10) {
                 showToast("You cannot add more than 10 sub-categories");
             } else {
                 if (selectedCategoryAdapter == null) {
-                    LinearLayoutManager linearLayoutManager1 = new LinearLayoutManager(PreviewActivity.this, LinearLayoutManager.HORIZONTAL, false);
-                    selectedCategoryAdapter = new SelectedCategoryAdapter(PreviewActivity.this);
-                    activityPreviewBinding.selectedCategoryList.setLayoutManager(linearLayoutManager1);
-                    activityPreviewBinding.selectedCategoryList.setAdapter(selectedCategoryAdapter);
+                    LinearLayoutManager linearLayoutManager1 = new LinearLayoutManager(EditPreviewActivity.this, LinearLayoutManager.HORIZONTAL, false);
+                    selectedCategoryAdapter = new SelectedCategoryAdapter(EditPreviewActivity.this);
+                    activityEditPreviewBinding.selectedCategoryList.setLayoutManager(linearLayoutManager1);
+                    activityEditPreviewBinding.selectedCategoryList.setAdapter(selectedCategoryAdapter);
                 }
 
                 if (selectedCategoryModelList != null && selectedCategoryModelList.size() > 0) {
@@ -359,9 +483,9 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
                 selectedMainCategoryModelList.add(mainCategoryModel.getCategoryName());
                 selectedCategoryAdapter.addCategory(mainCategoryModel.getCategoryName());
 
-                activityPreviewBinding.selectedCategoryList.setVisibility(View.VISIBLE);
-                activityPreviewBinding.selectedCategoryList.smoothScrollToPosition(Objects.requireNonNull(activityPreviewBinding.selectedCategoryList.getAdapter()).getItemCount() - 1);
-                activityPreviewBinding.saveDetails.setBackgroundResource(R.drawable.rectangle_dark_green_border);
+                activityEditPreviewBinding.selectedCategoryList.setVisibility(View.VISIBLE);
+                activityEditPreviewBinding.selectedCategoryList.smoothScrollToPosition(Objects.requireNonNull(activityEditPreviewBinding.selectedCategoryList.getAdapter()).getItemCount() - 1);
+                activityEditPreviewBinding.saveDetails.setBackgroundResource(R.drawable.rectangle_dark_green_border);
                 enableSaved = true;
             }
 
@@ -373,10 +497,10 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
 
         mainCategoryAdapter.notifyDataSetChanged();
         if (selectedCategoryAdapter == null) {
-            LinearLayoutManager linearLayoutManager1 = new LinearLayoutManager(PreviewActivity.this, LinearLayoutManager.HORIZONTAL, false);
-            selectedCategoryAdapter = new SelectedCategoryAdapter(PreviewActivity.this);
-            activityPreviewBinding.selectedCategoryList.setLayoutManager(linearLayoutManager1);
-            activityPreviewBinding.selectedCategoryList.setAdapter(selectedCategoryAdapter);
+            LinearLayoutManager linearLayoutManager1 = new LinearLayoutManager(EditPreviewActivity.this, LinearLayoutManager.HORIZONTAL, false);
+            selectedCategoryAdapter = new SelectedCategoryAdapter(EditPreviewActivity.this);
+            activityEditPreviewBinding.selectedCategoryList.setLayoutManager(linearLayoutManager1);
+            activityEditPreviewBinding.selectedCategoryList.setAdapter(selectedCategoryAdapter);
         }
 
         subCategoryAdapter.notifyDataSetChanged();
@@ -399,18 +523,18 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
             }
         }
         if (selectedCategoryModelList != null && selectedCategoryModelList.size() > 0) {
-            activityPreviewBinding.selectedCategoryList.setVisibility(View.VISIBLE);
-            activityPreviewBinding.selectedCategoryList.smoothScrollToPosition(Objects.requireNonNull(activityPreviewBinding.selectedCategoryList.getAdapter()).getItemCount() - 1);
-            activityPreviewBinding.addCategoryText.setText(getResources().getString(R.string.list_category));
-            activityPreviewBinding.addCategory.setBackgroundResource(R.drawable.rectangle_dark_green_border);
-            activityPreviewBinding.saveDetails.setBackgroundResource(R.drawable.rectangle_dark_green_border);
+            activityEditPreviewBinding.selectedCategoryList.setVisibility(View.VISIBLE);
+            activityEditPreviewBinding.selectedCategoryList.smoothScrollToPosition(Objects.requireNonNull(activityEditPreviewBinding.selectedCategoryList.getAdapter()).getItemCount() - 1);
+            activityEditPreviewBinding.addCategoryText.setText(getResources().getString(R.string.list_category));
+            activityEditPreviewBinding.addCategory.setBackgroundResource(R.drawable.rectangle_dark_green_border);
+            activityEditPreviewBinding.saveDetails.setBackgroundResource(R.drawable.rectangle_dark_green_border);
             enableSaved = true;
         } else {
             selectedCategoryModelList = new ArrayList<>();
-            activityPreviewBinding.selectedCategoryList.setVisibility(View.GONE);
-            activityPreviewBinding.addCategoryText.setText(getResources().getString(R.string.add_category));
-            activityPreviewBinding.addCategory.setBackgroundResource(R.drawable.rectangle_white_black_border);
-            activityPreviewBinding.saveDetails.setBackgroundResource(R.drawable.rectangle_grey);
+            activityEditPreviewBinding.selectedCategoryList.setVisibility(View.GONE);
+            activityEditPreviewBinding.addCategoryText.setText(getResources().getString(R.string.add_category));
+            activityEditPreviewBinding.addCategory.setBackgroundResource(R.drawable.rectangle_white_black_border);
+            activityEditPreviewBinding.saveDetails.setBackgroundResource(R.drawable.rectangle_grey);
             enableSaved = false;
         }
     }
@@ -420,14 +544,14 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
         monthOfYear = monthOfYear + 1;
         if (dayOfMonth < 10) {
             if (monthOfYear < 10) {
-                activityPreviewBinding.photoDate.setText(String.format(Locale.ENGLISH, "0%d.0%d.%d", dayOfMonth, monthOfYear, year));
+                activityEditPreviewBinding.photoDate.setText(String.format(Locale.ENGLISH, "0%d.0%d.%d", dayOfMonth, monthOfYear, year));
             } else {
-                activityPreviewBinding.photoDate.setText(String.format(Locale.ENGLISH, "0%d.%d.%d", dayOfMonth, monthOfYear, year));
+                activityEditPreviewBinding.photoDate.setText(String.format(Locale.ENGLISH, "0%d.%d.%d", dayOfMonth, monthOfYear, year));
             }
         } else if (monthOfYear < 10) {
-            activityPreviewBinding.photoDate.setText(String.format(Locale.ENGLISH, "%d.0%d.%d", dayOfMonth, monthOfYear, year));
+            activityEditPreviewBinding.photoDate.setText(String.format(Locale.ENGLISH, "%d.0%d.%d", dayOfMonth, monthOfYear, year));
         } else {
-            activityPreviewBinding.photoDate.setText(String.format(Locale.ENGLISH, "%d.%d.%d", dayOfMonth, monthOfYear, year));
+            activityEditPreviewBinding.photoDate.setText(String.format(Locale.ENGLISH, "%d.%d.%d", dayOfMonth, monthOfYear, year));
         }
     }
 
@@ -436,9 +560,9 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
         if (requestCode == PERMISSION_CODE) {
             if (grantResults.length > 0) {
 
-                if (PermissionUtils.isStorageGranted(PreviewActivity.this) && PermissionUtils.isCameraGranted(PreviewActivity.this)) {
+                if (PermissionUtils.isStorageGranted(EditPreviewActivity.this) && PermissionUtils.isCameraGranted(EditPreviewActivity.this)) {
 
-                    Intent i = new Intent(PreviewActivity.this, AddPictureActivity.class);
+                    Intent i = new Intent(EditPreviewActivity.this, AddPictureActivity.class);
                     if (replaceImage != null && !replaceImage.equalsIgnoreCase("")) {
                         startActivityForResult(i, LAUNCH_REPLACE_PICTURE_ACTIVITY);
                     } else {
@@ -471,14 +595,14 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
                 getResources().getString(R.string.ok),
                 (dialog1, id) -> {
                     dialog1.cancel();
-                    PermissionUtils.checkBothPermission(PreviewActivity.this, PERMISSION_CODE);
+                    PermissionUtils.checkBothPermission(EditPreviewActivity.this, PERMISSION_CODE);
                 });
 
         dialog.setNegativeButton(
                 getResources().getString(R.string.cancel),
                 (dialog12, id) -> {
                     dialog12.cancel();
-                    PermissionUtils.checkBothPermission(PreviewActivity.this, PERMISSION_CODE);
+                    PermissionUtils.checkBothPermission(EditPreviewActivity.this, PERMISSION_CODE);
                 });
 
         AlertDialog alert = dialog.create();
@@ -523,7 +647,7 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
                 String imagePathNew = data.getStringExtra("IMAGE_PATH");
                 imagesList.add(imagePathNew);
                 previewImagesAdapter.addImage(imagePathNew);
-                activityPreviewBinding.imagesRecyclerview.smoothScrollToPosition(Objects.requireNonNull(activityPreviewBinding.imagesRecyclerview.getAdapter()).getItemCount() - 1);
+                activityEditPreviewBinding.imagesRecyclerview.smoothScrollToPosition(Objects.requireNonNull(activityEditPreviewBinding.imagesRecyclerview.getAdapter()).getItemCount() - 1);
 
             }
         } else if (requestCode == LAUNCH_REPLACE_PICTURE_ACTIVITY) {
@@ -556,12 +680,12 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
                         showToast("You cannot add more than 10 pictures");
                     } else {
 
-                        if (PermissionUtils.isStorageGranted(PreviewActivity.this) && PermissionUtils.isCameraGranted(PreviewActivity.this)) {
-                            Intent i = new Intent(PreviewActivity.this, AddPictureActivity.class);
+                        if (PermissionUtils.isStorageGranted(EditPreviewActivity.this) && PermissionUtils.isCameraGranted(EditPreviewActivity.this)) {
+                            Intent i = new Intent(EditPreviewActivity.this, AddPictureActivity.class);
                             startActivityForResult(i, LAUNCH_ADD_PICTURE_ACTIVITY);
                             slideRightToLeft();
                         } else {
-                            PermissionUtils.checkBothPermission(PreviewActivity.this, PERMISSION_CODE);
+                            PermissionUtils.checkBothPermission(EditPreviewActivity.this, PERMISSION_CODE);
                         }
 
                     }
@@ -598,12 +722,12 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
                         if (BuildConfig.DEBUG) e.printStackTrace();
                         replaceImage = imagesList.get(currentImagePos - 1);
                     }
-                    if (PermissionUtils.isStorageGranted(PreviewActivity.this) && PermissionUtils.isCameraGranted(PreviewActivity.this)) {
-                        Intent i = new Intent(PreviewActivity.this, AddPictureActivity.class);
+                    if (PermissionUtils.isStorageGranted(EditPreviewActivity.this) && PermissionUtils.isCameraGranted(EditPreviewActivity.this)) {
+                        Intent i = new Intent(EditPreviewActivity.this, AddPictureActivity.class);
                         startActivityForResult(i, LAUNCH_REPLACE_PICTURE_ACTIVITY);
                         slideRightToLeft();
                     } else {
-                        PermissionUtils.checkBothPermission(PreviewActivity.this, PERMISSION_CODE);
+                        PermissionUtils.checkBothPermission(EditPreviewActivity.this, PERMISSION_CODE);
                     }
                 });
 
@@ -624,16 +748,16 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
 
         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
         dialog.setIcon(R.mipmap.ic_launcher);
-        dialog.setTitle("Remove Details");
-        dialog.setMessage("Do you want to remove this picture ? This will also discard your all details.");
+        dialog.setTitle("Delete Details");
+        dialog.setMessage("Do you want to remove this picture ? This will also delete your album details.");
         dialog.setCancelable(false);
 
         dialog.setPositiveButton(
                 getResources().getString(R.string.Yes),
                 (dialog1, id) -> {
                     dialog1.cancel();
-                    openActivity(this, CameraActivity.class, true, false);
-                    slideLeftToRight();
+                    deleteData();
+                    finish();
                 });
 
         dialog.setNegativeButton(
@@ -654,15 +778,14 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
         AlertDialog.Builder dialog = new AlertDialog.Builder(this);
         dialog.setIcon(R.mipmap.ic_launcher);
         dialog.setTitle("Remove Details");
-        dialog.setMessage("Do you want to discard your details ?");
+        dialog.setMessage("Do you want to discard your edit details ?");
         dialog.setCancelable(false);
 
         dialog.setPositiveButton(
                 getResources().getString(R.string.Yes),
                 (dialog1, id) -> {
                     dialog1.cancel();
-                    openActivity(this, CameraActivity.class, true, false);
-                    slideLeftToRight();
+                    finish();
                 });
 
         dialog.setNegativeButton(
@@ -728,7 +851,7 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
                     dialog1.cancel();
                     String textNew = Objects.requireNonNull(etComments.getText()).toString().trim();
                     if (!textNew.equalsIgnoreCase("")) {
-                        activityPreviewBinding.descriptionText.setText(textNew);
+                        activityEditPreviewBinding.descriptionText.setText(textNew);
                     }
                 });
 
@@ -828,8 +951,8 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
 
             if (reminderConverted != null && !reminderConverted.equalsIgnoreCase("")) {
                 alert.cancel();
-                activityPreviewBinding.addReminderText.setText(reminderConverted);
-                activityPreviewBinding.addReminder.setBackgroundResource(R.drawable.rectangle_orange_black_border);
+                activityEditPreviewBinding.addReminderText.setText(reminderConverted);
+                activityEditPreviewBinding.addReminder.setBackgroundResource(R.drawable.rectangle_orange_black_border);
             } else {
                 showToast("Please select any reminder");
             }
@@ -1032,12 +1155,49 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
         slideRightToLeft();
     }
 
-    private void init() {
-        DatabaseManager.init(PreviewActivity.this);
-        albumRepo = new AlbumRepo();
+    private void deleteDataPopup() {
+
+        replaceImage = "";
+
+        AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+        dialog.setIcon(R.mipmap.ic_launcher);
+        dialog.setTitle("Delete Details");
+        dialog.setMessage("Do you want to delete your album details.");
+        dialog.setCancelable(false);
+
+        dialog.setPositiveButton(
+                getResources().getString(R.string.Yes),
+                (dialog1, id) -> {
+                    dialog1.cancel();
+                    deleteData();
+                    finish();
+                });
+
+        dialog.setNegativeButton(
+                getResources().getString(R.string.no),
+                (dialog12, id) -> dialog12.cancel());
+
+        AlertDialog alert = dialog.create();
+
+        if (!alert.isShowing()) {
+            alert.show();
+        }
     }
 
-    private void saveData() {
+    private void deleteData() {
+        showLoading("");
+
+        new Handler().postDelayed(() -> {
+
+            albumRepo.delete(albumModelMain);
+
+            hideLoading();
+
+            finish();
+        }, 1000);
+    }
+
+    private void updateData() {
 
         showLoading("");
 
@@ -1046,8 +1206,8 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
             StringBuilder image = new StringBuilder();
             StringBuilder mainCategory = new StringBuilder();
             StringBuilder subCategory = new StringBuilder();
-            AlbumModel albumModel = new AlbumModel();
-            albumModel.setDate(activityPreviewBinding.photoDate.getText().toString().trim());
+
+            albumModelMain.setDate(activityEditPreviewBinding.photoDate.getText().toString().trim());
             if (imagesList != null && imagesList.size() > 0) {
                 for (int i = 0; i < imagesList.size(); i++) {
                     if (i == 0) {
@@ -1075,20 +1235,19 @@ public class PreviewActivity extends BaseActivity implements CallbackMainCategor
                     }
                 }
             }
-            albumModel.setImages(image.toString());
-            albumModel.setMainCategories(mainCategory.toString());
-            albumModel.setSubCategories(subCategory.toString());
-            albumModel.setNote(activityPreviewBinding.descriptionText.getText().toString().trim());
-            albumModel.setReminderConverted(reminderConverted);
-            albumModel.setReminderActual(reminderActual);
-            albumModel.setReminderTime(reminderTime);
+            albumModelMain.setImages(image.toString());
+            albumModelMain.setMainCategories(mainCategory.toString());
+            albumModelMain.setSubCategories(subCategory.toString());
+            albumModelMain.setNote(activityEditPreviewBinding.descriptionText.getText().toString().trim());
+            albumModelMain.setReminderConverted(reminderConverted);
+            albumModelMain.setReminderActual(reminderActual);
+            albumModelMain.setReminderTime(reminderTime);
 
-            albumRepo.create(albumModel);
+            albumRepo.update(albumModelMain);
 
             hideLoading();
 
-            openActivity(this, MainActivity.class, false, true);
-            slideTopToBottom();
+            finish();
         }, 1000);
     }
 }

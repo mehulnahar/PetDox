@@ -1,12 +1,13 @@
 package com.petdox.mct.model;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * Created by Maroof Ahmed Siddique
  * maroofahmedsiddique@gmail.com
  */
-public class CarouselModel {
+public class CarouselModel implements Serializable {
 
     String date = "";
     String reminderActual = "";

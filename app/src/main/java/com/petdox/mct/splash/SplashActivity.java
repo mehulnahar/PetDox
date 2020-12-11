@@ -17,7 +17,6 @@ import com.petdox.mct.databinding.ActivitySplashBinding;
  */
 public class SplashActivity extends BaseActivity {
 
-    private final int mSplashTime = 3000;
     ActivitySplashBinding activitySplashBinding;
     private Handler mSplashHandler;
     private Runnable mSplashRunnable;
@@ -33,6 +32,7 @@ public class SplashActivity extends BaseActivity {
         setContentView(activitySplashBinding.getRoot());
 
         initSplash();
+        int mSplashTime = 3000;
         mSplashHandler.postDelayed(mSplashRunnable, mSplashTime);
     }
 

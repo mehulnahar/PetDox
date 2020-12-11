@@ -31,6 +31,7 @@ public class DisplayImagesActivity extends BaseActivity {
     DisplayImagesAdapter displayImagesAdapter = null;
     int currentImagePos = 0;
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);

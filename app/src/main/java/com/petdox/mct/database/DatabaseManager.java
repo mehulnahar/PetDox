@@ -9,7 +9,7 @@ import android.content.Context;
 public class DatabaseManager {
 
     static private DatabaseManager instance;
-    private DatabaseHelper helper;
+    private final DatabaseHelper helper;
 
     private DatabaseManager(Context ctx) {
         helper = new DatabaseHelper(ctx);

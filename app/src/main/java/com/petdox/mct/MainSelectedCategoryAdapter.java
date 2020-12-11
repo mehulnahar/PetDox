@@ -32,6 +32,7 @@ public class MainSelectedCategoryAdapter extends RecyclerView.Adapter<MainSelect
         if (selectedCategoryModelList != null && selectedCategoryModelList.size() > 0) {
             selectedCategoryModelList.clear();
         }
+        assert selectedCategoryModelList != null;
         selectedCategoryModelList.addAll(selectedCategoryModel);
         Collections.sort(selectedCategoryModelList, String::compareToIgnoreCase);
         notifyDataSetChanged();

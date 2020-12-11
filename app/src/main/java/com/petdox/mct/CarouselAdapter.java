@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.petdox.mct.callback.CallbackImageClick;
 import com.petdox.mct.model.CarouselModel;
+import com.petdox.mct.utils.DoubleClick;
+import com.petdox.mct.utils.DoubleClickListener;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,11 +62,27 @@ public class CarouselAdapter extends RecyclerView.Adapter<CarouselAdapter.ImageV
         CarouselModel carouselModel = carouselModelList.get(position);
 
         Glide.with(context).load(carouselModel.getImages().get(0)).into(holder.pet_image);
-        if (carouselModel.getImages() != null && carouselModel.getImages().size() == 1) {
+        if (carouselModel.getImages().size() == 1) {
             holder.image_position.setText(String.format(Locale.ENGLISH, "%d pic", carouselModel.getImages().size()));
         } else {
             holder.image_position.setText(String.format(Locale.ENGLISH, "%d pics", carouselModel.getImages().size()));
         }
+
+        holder.pet_image.setOnClickListener(new DoubleClick(new DoubleClickListener() {
+            @Override
+            public void onSingleClick(View view) {
+                if (callbackImageClick != null) {
+                    callbackImageClick.singleClick();
+                }
+            }
+
+            @Override
+            public void onDoubleClick(View view) {
+                if (callbackImageClick != null) {
+                    callbackImageClick.doubleClick();
+                }
+            }
+        }));
 
     }
 

@@ -14,7 +14,6 @@ import com.petdox.mct.R;
 import com.petdox.mct.callback.CallbackClickReminder;
 import com.petdox.mct.preview.model.ReminderModel;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -24,7 +23,7 @@ import java.util.Objects;
  */
 public class ReminderListAdapter extends RecyclerView.Adapter<ReminderListAdapter.ReminderViewHolder> {
 
-    List<ReminderModel> reminderList = new ArrayList<>();
+    List<ReminderModel> reminderList;
     Context context;
     CallbackClickReminder callbackClickReminder;
 

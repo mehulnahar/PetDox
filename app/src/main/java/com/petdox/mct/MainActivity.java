@@ -20,19 +20,20 @@ import com.petdox.mct.camera.CameraActivity;
 import com.petdox.mct.carousel.CarouselLayoutManager;
 import com.petdox.mct.carousel.CarouselZoomPostLayoutListener;
 import com.petdox.mct.carousel.CenterScrollListener;
-import com.petdox.mct.carousel.DefaultChildSelectionListener;
 import com.petdox.mct.comingsoon.ComingSoonActivity;
 import com.petdox.mct.database.DatabaseManager;
 import com.petdox.mct.databinding.ActivityMainBinding;
+import com.petdox.mct.editpreview.EditPreviewActivity;
 import com.petdox.mct.model.AlbumModel;
 import com.petdox.mct.model.CarouselModel;
 import com.petdox.mct.preview.DisplayImagesActivity;
 import com.petdox.mct.repo.AlbumRepo;
+import com.petdox.mct.utils.DoubleClick;
+import com.petdox.mct.utils.DoubleClickListener;
 import com.petdox.mct.utils.PermissionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.StringTokenizer;
 
 /**
@@ -46,6 +47,10 @@ public class MainActivity extends BaseActivity implements CallbackImageClick {
     List<CarouselModel> carouselModels = new ArrayList<>();
     MainSelectedCategoryAdapter selectedCategoryAdapter = null;
     ArrayList<String> imagesList = new ArrayList<>();
+    CarouselModel carouselModel = null;
+    List<AlbumModel> albumModelList = new ArrayList<>();
+    AlbumModel albumModel = null;
+    String selectedItem = "all";
     private AlbumRepo albumRepo;
 
     @Override
@@ -55,10 +60,19 @@ public class MainActivity extends BaseActivity implements CallbackImageClick {
         setContentView(activityMainBinding.getRoot());
 
         init();
-        retrieveData();
+
+        activityMainBinding.selectedCategoryList.setNestedScrollingEnabled(false);
+        activityMainBinding.carouselList.setNestedScrollingEnabled(false);
 
         activityMainBinding.spinner.setItems("All", "Cat", "Dog", "Elephant", "Fish", "Frog", "Monkey", "Gorilla", "Cow", "Zebra", "other/unknown");
-        activityMainBinding.spinner.setOnItemSelectedListener((MaterialSpinner.OnItemSelectedListener<String>) (view, position, id, item) -> showToast("In Development"));
+        activityMainBinding.spinner.setOnItemSelectedListener((MaterialSpinner.OnItemSelectedListener<String>) (view, position, id, item) -> {
+            selectedItem = item;
+            if (item.equalsIgnoreCase("all")) {
+                retrieveData();
+            } else {
+                retrieveCategoryData(item);
+            }
+        });
 
         activityMainBinding.addNew.setOnClickListener(v -> {
             if (PermissionUtils.isStorageGranted(MainActivity.this) && PermissionUtils.isCameraGranted(MainActivity.this)) {
@@ -74,19 +88,24 @@ public class MainActivity extends BaseActivity implements CallbackImageClick {
             slideRightToLeft();
         });
 
-        activityMainBinding.mostRecentFirst.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showToast("In Development");
-            }
-        });
+        activityMainBinding.mostRecentFirst.setOnClickListener(v -> showToast("In Development"));
 
-        activityMainBinding.nextReminderFirst.setOnClickListener(new View.OnClickListener() {
+        activityMainBinding.nextReminderFirst.setOnClickListener(v -> showToast("In Development"));
+
+        activityMainBinding.detailsLayout.setOnClickListener(new DoubleClick(new DoubleClickListener() {
             @Override
-            public void onClick(View v) {
-                showToast("In Development");
+            public void onSingleClick(View view) {
+
             }
-        });
+
+            @Override
+            public void onDoubleClick(View view) {
+                Intent intent = new Intent(MainActivity.this, EditPreviewActivity.class);
+                intent.putExtra("EDIT_DETAILS", carouselModel);
+                intent.putExtra("ALBUM", albumModel);
+                startActivity(intent);
+            }
+        }));
     }
 
     @Override
@@ -170,6 +189,17 @@ public class MainActivity extends BaseActivity implements CallbackImageClick {
         albumRepo = new AlbumRepo();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (selectedItem.equalsIgnoreCase("all")) {
+            retrieveData();
+        } else {
+            retrieveCategoryData(selectedItem);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
     private void retrieveData() {
 
         showLoading("");
@@ -177,36 +207,40 @@ public class MainActivity extends BaseActivity implements CallbackImageClick {
         if (carouselModels != null && carouselModels.size() > 0) {
             carouselModels.clear();
         }
+        if (albumModelList != null && albumModelList.size() > 0) {
+            albumModelList.clear();
+        }
 
         new Handler().postDelayed(() -> {
-            List<AlbumModel> items = (List<AlbumModel>) albumRepo.findAll();
 
-            if (items != null && items.size() > 0) {
+            albumModelList = (List<AlbumModel>) albumRepo.findAll();
 
-                for (int i = 0; i < items.size(); i++) {
+            if (albumModelList != null && albumModelList.size() > 0) {
+
+                for (int i = 0; i < albumModelList.size(); i++) {
                     CarouselModel carouselModel = new CarouselModel();
-                    carouselModel.setDate(items.get(i).getDate());
-                    carouselModel.setReminderTime(items.get(i).getReminderTime());
-                    carouselModel.setReminderActual(items.get(i).getReminderActual());
-                    carouselModel.setReminderConverted(items.get(i).getReminderConverted());
-                    carouselModel.setNote(items.get(i).getNote());
+                    carouselModel.setDate(albumModelList.get(i).getDate());
+                    carouselModel.setReminderTime(albumModelList.get(i).getReminderTime());
+                    carouselModel.setReminderActual(albumModelList.get(i).getReminderActual());
+                    carouselModel.setReminderConverted(albumModelList.get(i).getReminderConverted());
+                    carouselModel.setNote(albumModelList.get(i).getNote());
                     List<String> images = new ArrayList<>();
                     List<String> mainCategories = new ArrayList<>();
                     List<String> subCategories = new ArrayList<>();
 
-                    StringTokenizer imageST = new StringTokenizer(items.get(i).getImages(), "#");
+                    StringTokenizer imageST = new StringTokenizer(albumModelList.get(i).getImages(), "#");
                     while (imageST.hasMoreTokens()) {
                         images.add(imageST.nextToken());
                     }
                     carouselModel.setImages(images);
 
-                    StringTokenizer mainCategoriesST = new StringTokenizer(items.get(i).getMainCategories(), "#");
+                    StringTokenizer mainCategoriesST = new StringTokenizer(albumModelList.get(i).getMainCategories(), "#");
                     while (mainCategoriesST.hasMoreTokens()) {
                         mainCategories.add(mainCategoriesST.nextToken());
                     }
                     carouselModel.setMainCategories(mainCategories);
 
-                    StringTokenizer subCategoriesST = new StringTokenizer(items.get(i).getSubCategories(), "#");
+                    StringTokenizer subCategoriesST = new StringTokenizer(albumModelList.get(i).getSubCategories(), "#");
                     while (subCategoriesST.hasMoreTokens()) {
                         subCategories.add(subCategoriesST.nextToken());
                     }
@@ -233,6 +267,71 @@ public class MainActivity extends BaseActivity implements CallbackImageClick {
 
     }
 
+    @SuppressWarnings("unchecked")
+    private void retrieveCategoryData(String category) {
+
+        showLoading("");
+
+        if (carouselModels != null && carouselModels.size() > 0) {
+            carouselModels.clear();
+        }
+        if (albumModelList != null && albumModelList.size() > 0) {
+            albumModelList.clear();
+        }
+
+        new Handler().postDelayed(() -> {
+
+            albumModelList = (List<AlbumModel>) albumRepo.findCategory(category);
+
+            if (albumModelList != null && albumModelList.size() > 0) {
+
+                for (int i = 0; i < albumModelList.size(); i++) {
+                    CarouselModel carouselModel = new CarouselModel();
+                    carouselModel.setDate(albumModelList.get(i).getDate());
+                    carouselModel.setReminderTime(albumModelList.get(i).getReminderTime());
+                    carouselModel.setReminderActual(albumModelList.get(i).getReminderActual());
+                    carouselModel.setReminderConverted(albumModelList.get(i).getReminderConverted());
+                    carouselModel.setNote(albumModelList.get(i).getNote());
+                    List<String> images = new ArrayList<>();
+                    List<String> mainCategories = new ArrayList<>();
+                    List<String> subCategories = new ArrayList<>();
+
+                    StringTokenizer imageST = new StringTokenizer(albumModelList.get(i).getImages(), "#");
+                    while (imageST.hasMoreTokens()) {
+                        images.add(imageST.nextToken());
+                    }
+                    carouselModel.setImages(images);
+
+                    StringTokenizer mainCategoriesST = new StringTokenizer(albumModelList.get(i).getMainCategories(), "#");
+                    while (mainCategoriesST.hasMoreTokens()) {
+                        mainCategories.add(mainCategoriesST.nextToken());
+                    }
+                    carouselModel.setMainCategories(mainCategories);
+
+                    StringTokenizer subCategoriesST = new StringTokenizer(albumModelList.get(i).getSubCategories(), "#");
+                    while (subCategoriesST.hasMoreTokens()) {
+                        subCategories.add(subCategoriesST.nextToken());
+                    }
+                    carouselModel.setSubCategories(subCategories);
+                    carouselModels.add(carouselModel);
+                }
+
+                if (carouselModels != null && carouselModels.size() > 0) {
+                    updateData();
+                    activityMainBinding.allContent.setVisibility(View.VISIBLE);
+                } else {
+                    activityMainBinding.allContent.setVisibility(View.GONE);
+                }
+            } else {
+                activityMainBinding.allContent.setVisibility(View.GONE);
+            }
+
+            hideLoading();
+
+        }, 1000);
+
+    }
+
     private void updateData() {
 
         final CarouselLayoutManager layoutManager = new CarouselLayoutManager(CarouselLayoutManager.HORIZONTAL, true);
@@ -245,21 +344,18 @@ public class MainActivity extends BaseActivity implements CallbackImageClick {
         activityMainBinding.carouselList.setAdapter(carouselAdapter);
         activityMainBinding.carouselList.addOnScrollListener(new CenterScrollListener());
         carouselAdapter.updateList(carouselModels);
-        DefaultChildSelectionListener.initCenterItemListener((recyclerView, carouselLayoutManager, v) -> {
-            final int position = recyclerView.getChildLayoutPosition(v);
-            final String msg = String.format(Locale.ENGLISH, "Item %1$d was clicked", position);
-            // showToast(msg);
-            showToast("In Development");
-        }, activityMainBinding.carouselList, layoutManager);
         layoutManager.addOnItemSelectionListener(this::detailsDataView);
     }
 
     private void detailsDataView(int position) {
 
+        carouselModel = carouselModels.get(position);
+        albumModel = albumModelList.get(position);
+
         if (carouselModels.get(position).getReminderConverted() != null && !carouselModels.get(position).getReminderConverted().equalsIgnoreCase("")) {
             activityMainBinding.addReminderText.setText(carouselModels.get(position).getReminderConverted());
         } else {
-            activityMainBinding.addReminderText.setText("No Reminder");
+            activityMainBinding.addReminderText.setText(getResources().getString(R.string.no_reminder));
         }
 
         activityMainBinding.photoDate.setText(carouselModels.get(position).getDate());
@@ -281,7 +377,6 @@ public class MainActivity extends BaseActivity implements CallbackImageClick {
             assert imagesList != null;
             imagesList.addAll(carouselModels.get(position).getImages());
         }
-
     }
 
     @Override
@@ -294,6 +389,9 @@ public class MainActivity extends BaseActivity implements CallbackImageClick {
 
     @Override
     public void doubleClick() {
-        showToast("onItemDoubleClicked");
+        Intent intent = new Intent(this, EditPreviewActivity.class);
+        intent.putExtra("EDIT_DETAILS", carouselModel);
+        intent.putExtra("ALBUM", albumModel);
+        startActivity(intent);
     }
 }

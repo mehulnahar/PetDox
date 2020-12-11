@@ -28,6 +28,8 @@
     <string name="add_note">Add a note ( Max. 500 characters allowed )</string>
     <string name="max_characters_text">Max. 500 characters allowed</string>
     <string name="no_record_added">No Record Added</string>
+    <string name="delete">Delete</string>
+    <string name="no_reminder">No Reminder</string>
 
 
 </resources>

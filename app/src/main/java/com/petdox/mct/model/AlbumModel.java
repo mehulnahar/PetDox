@@ -3,12 +3,14 @@ package com.petdox.mct.model;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
+import java.io.Serializable;
+
 /**
  * Created by Maroof Ahmed Siddique
  * maroofahmedsiddique@gmail.com
  */
 @DatabaseTable(tableName = "album")
-public class AlbumModel {
+public class AlbumModel implements Serializable {
 
     @DatabaseField(generatedId = true)
     private int id;
