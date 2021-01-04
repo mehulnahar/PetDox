@@ -30,6 +30,7 @@
     <string name="no_record_added">No Record Added</string>
     <string name="delete">Delete</string>
     <string name="no_reminder">No Reminder</string>
+    <string name="send_cat_docs">Send cat docs</string>
 
 
 </resources>

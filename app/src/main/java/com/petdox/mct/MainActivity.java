@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.StrictMode;
 import android.provider.Settings;
 import android.view.View;
 
@@ -36,6 +37,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import static com.petdox.mct.utils.ConstantUtils.sendEmailMultipleFiles;
+
 /**
  * Created by Maroof Ahmed Siddique
  * Mindcrew Technologies Pvt Ltd
@@ -58,6 +61,9 @@ public class MainActivity extends BaseActivity implements CallbackImageClick {
         super.onCreate(savedInstanceState);
         activityMainBinding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(activityMainBinding.getRoot());
+
+        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+        StrictMode.setVmPolicy(builder.build());
 
         init();
 
@@ -90,7 +96,7 @@ public class MainActivity extends BaseActivity implements CallbackImageClick {
 
         activityMainBinding.mostRecentFirst.setOnClickListener(v -> showToast("In Development"));
 
-        activityMainBinding.nextReminderFirst.setOnClickListener(v -> showToast("In Development"));
+        activityMainBinding.sendCatDocs.setOnClickListener(v -> filterCatImages("Cat"));
 
         activityMainBinding.detailsLayout.setOnClickListener(new DoubleClick(new DoubleClickListener() {
             @Override
@@ -394,4 +400,26 @@ public class MainActivity extends BaseActivity implements CallbackImageClick {
         intent.putExtra("ALBUM", albumModel);
         startActivity(intent);
     }
+
+    @SuppressWarnings("unchecked")
+    private void filterCatImages(String category) {
+
+        List<AlbumModel> albumModelList;
+        ArrayList<String> images = new ArrayList<>();
+
+        albumModelList = (List<AlbumModel>) albumRepo.findCategory(category);
+        if (albumModelList != null && albumModelList.size() > 0) {
+            for (int i = 0; i < albumModelList.size(); i++) {
+                StringTokenizer imageST = new StringTokenizer(albumModelList.get(i).getImages(), "#");
+                while (imageST.hasMoreTokens()) {
+                    images.add(imageST.nextToken());
+                }
+            }
+
+            sendEmailMultipleFiles(this, "marco.lehmann@protonmail.ch", "Cat Dox", "Test", images);
+        } else {
+            showToast("No Cat category available");
+        }
+    }
+
 }

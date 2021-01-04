@@ -165,7 +165,7 @@
                     </LinearLayout>
 
                     <LinearLayout
-                        android:id="@+id/next_reminder_first"
+                        android:id="@+id/send_cat_docs"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center"
@@ -183,7 +183,7 @@
                             android:gravity="center"
                             android:maxLines="1"
                             android:singleLine="true"
-                            android:text="@string/next_reminder_first"
+                            android:text="@string/send_cat_docs"
                             android:textColor="@color/black"
                             autofit:minTextSize="@dimen/textsize_12" />
                     </LinearLayout>
